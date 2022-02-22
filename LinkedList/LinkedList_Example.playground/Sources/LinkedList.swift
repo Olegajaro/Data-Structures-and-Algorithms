@@ -15,7 +15,7 @@ public struct LinkedList<Value> {
 
     // MARK: - Добавление элемента в начало списка
     public mutating func push(_ value: Value) {
-        
+        copyNodes()
         head = Node(value: value, next: head)
         
         if tail == nil {
@@ -25,7 +25,7 @@ public struct LinkedList<Value> {
     
     // MARK: - Добавление элемента в конец списка
     public mutating func append(_ value: Value) {
-        
+        copyNodes()
         // 1
         // если список пуст, обновляем как начало так и конец нового узла
         // добавление к пустому списку идентично push
@@ -75,6 +75,7 @@ public struct LinkedList<Value> {
 //    @discardableResult
     public mutating func insert(_ value: Value,
                                 after node: Node<Value>) -> Node<Value> {
+        copyNodes()
         // 2
         // случай, когда этот метод вызывается с хвостовым узлом
         // происходит эквивалентный метод добавления в конец
@@ -93,6 +94,7 @@ public struct LinkedList<Value> {
     // MARK: - Удаление элемента в начале списка
     @discardableResult
     public mutating func pop() -> Value? {
+        copyNodes()
         defer {
             head = head?.next
             
@@ -107,6 +109,7 @@ public struct LinkedList<Value> {
     // MARK: - Удаление элемента в конце списка
     @discardableResult
     public mutating func removeLast() -> Value? {
+        copyNodes()
         // 1
         // голова равнил nil, так что возвращется nil
         guard let head = head else {
@@ -147,6 +150,7 @@ public struct LinkedList<Value> {
      */
     @discardableResult
     public mutating func remove(after node: Node<Value>) -> Value? {
+        copyNodes()
         defer {
             if node.next === tail {
                 tail = node
@@ -156,6 +160,25 @@ public struct LinkedList<Value> {
         }
         
         return node.next?.value
+    }
+    
+    // Создание базового хранилища и обновление всех ссылок (начало и конец) на новую копию
+    private mutating func copyNodes() {
+        guard !isKnownUniquelyReferenced(&head) else { return }
+        
+        guard var oldNode = head else { return }
+        
+        head = Node(value: oldNode.value)
+        var newNode = head
+        
+        while let nextOldNode = oldNode.next {
+            newNode!.next = Node(value: nextOldNode.value)
+            newNode = newNode!.next
+            
+            oldNode = nextOldNode
+        }
+        
+        tail = newNode
     }
 }
 
@@ -168,5 +191,55 @@ extension LinkedList: CustomStringConvertible {
         }
         
         return String(describing: head)
+    }
+}
+
+// MARK: - Collection
+extension LinkedList: Collection {
+    
+    public struct Index: Comparable {
+        
+        public var node: Node<Value>?
+        
+        static public func ==(lhs: Index, rhs: Index) -> Bool {
+            switch (lhs.node, rhs.node) {
+            case let (left?, right?):
+                return left.next === right.next
+            case (nil, nil):
+                return true
+            default:
+                return false
+            }
+        }
+        
+        static public func <(lhs: Index, rhs: Index) -> Bool {
+            guard lhs != rhs else {
+                return false
+            }
+            let nodes = sequence(first: lhs.node) { $0?.next }
+            
+            return nodes.contains { $0 === rhs.node }
+        }
+    }
+    // 1
+    // стартовый индекс определеяется головой связанного списка
+    public var startIndex: Index {
+        return Index(node: head)
+    }
+    // 2
+    // коллекция определяет конечный индекс сразу после последнего доступного значения
+    public var endIndex: Index {
+        return Index(node: tail?.next)
+    }
+    // 3
+    // указывает как можно увеличивать индекс
+    // дает индекс ближайшего следующего узла
+    public func index(after i: Index) -> Index {
+        return Index(node: i.node?.next)
+    }
+    // 4
+    // Используется для сопоставления индекса со значением в коллекции
+    public subscript(position: Index) -> Value {
+        return position.node!.value
     }
 }
