@@ -1,4 +1,6 @@
 import UIKit
+import Foundation
+import Darwin
 
 public protocol Queue {
     associatedtype Element
@@ -77,3 +79,52 @@ queue.peek
  Space Complexity |      O(n)      |     O(n)
  */
 
+// MARK: - Использование двусвязного списка для создания очереди
+public class QueueLinkedList<T>: Queue {
+    public typealias Element = T
+    
+    public var isEmpty: Bool {
+        list.isEmpty
+    }
+    
+    public var peek: T? {
+        list.first?.value
+    }
+    
+    private var list = DoublyLinkedList<T>()
+    
+    public init() { }
+    
+    public func enqueue(_ element: T) -> Bool {
+        list.append(value: element)
+        return true
+    }
+    
+    public func dequeue() -> T? {
+        guard !list.isEmpty,  let element = list.first else {
+            return nil
+        }
+        
+        return list.remove(element)
+    }
+}
+
+var queueLinked = QueueLinkedList<String>()
+queueLinked.enqueue("Ray")
+queueLinked.enqueue("Brian")
+queueLinked.enqueue("Eric")
+queueLinked.dequeue()
+queueLinked
+queueLinked.peek
+
+/*
+                Linked-List Based Queue
+ 
+ Operations       |   Best case    |  Worst case
+ -----------------|----------------|-------------
+ enqueue(_:)      |      O(1)      |     O(1)
+ ------------------------------------------------
+ dequeue(_:)      |      O(1)      |     O(1)
+ ------------------------------------------------
+ Space Complexity |      O(n)      |     O(n)
+ */
