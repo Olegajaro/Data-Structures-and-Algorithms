@@ -154,3 +154,5 @@ hashTable.get("Tim Lee")
 
 hashTable["Kevin Flynn"] = "The Grid"
 hashTable["Kevin Flynn"]
+
+hashTable.prettyPrint()
